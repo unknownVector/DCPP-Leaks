@@ -1,0 +1,129 @@
+<?php
+
+/**
+ * Return taxonomy reference fields
+ * @param string $entity_type
+ * 
+ * @return array
+ */
+function textmining_api_get_term_fields($entity_type) {
+  $vocab_options = array();
+  // look up for taxonomy fields
+  foreach (field_info_fields() as $field => $field_info) {
+    if ( $field_info['type'] != 'taxonomy_term_reference' ) continue;
+    if ( ! isset($field_info['bundles'][$entity_type]) ) continue;
+    
+    $vocab=taxonomy_vocabulary_machine_name_load($field_info['settings']['allowed_values'][0]['vocabulary']);
+    if ($vocab) $vocab_options[$field] = t('@vocab (@field)', array('@vocab' => $vocab->name, '@field' => $field));
+  }
+  
+  return $vocab_options;
+}
+
+/**
+ * Wrapper for drupal_http_request() or built in function with proxy support.
+ * 
+ * @param $url
+ *   A string containing a fully qualified URI.
+ * @param array $options
+ *  'data' can be an array
+ * 
+ * @see drupal_http_request()
+ */
+function textmining_api_http_request($url, array $options = array()) {
+  if (variable_get('textmining_api_proxy_host', FALSE)) {
+    // add proxy support
+    $options+=array(
+      'proxy_host' => variable_get('textmining_api_proxy_host', FALSE),
+      'proxy_port' => variable_get('textmining_api_proxy_port', FALSE),
+      'proxy_user' => variable_get('textmining_api_proxy_user', FALSE),
+      'proxy_password' => variable_get('textmining_api_proxy_password', FALSE),
+    );
+    return textmining_api_http_proxy_request($url, $options);
+  }
+  else {
+    if (isset($options['data'])&&is_array($options['data'])) {
+      $options['data'] = http_build_query($options['data']);
+    }
+    return drupal_http_request($url, $options);
+  }
+}
+
+
+/**
+ * Replacement fo drupal_http_request() with proxy support.
+ * 
+ * @param $url
+ *   A string containing a fully qualified URI.
+ * @param array $options
+ * 	'proxy_host' => 'proxy.example.com',
+ *  'proxy_port' => '8080',
+ *  'proxy_user' => 'jsmith',
+ *  'proxy_password' => '*****',
+ * 
+ * @see drupal_http_request()
+ */
+function textmining_api_http_proxy_request($url, array $options = array()) {
+  include_once 'HTTP/Request2.php';
+  
+  $config = array(
+    'use_brackets' => TRUE,
+    'proxy_host'        => $options['proxy_host'],
+    'proxy_port'        => $options['proxy_port'],
+    'proxy_user'        => $options['proxy_user'],
+    'proxy_password'    => $options['proxy_password'],
+  );
+
+  if (isset($options['max_redirects'])) {
+    $config['max_redirects'] = $options['max_redirects'];
+  } 
+
+  if (isset($options['timeout'])) {
+    $config['timeout'] = $options['timeout'];
+  } 
+  
+  if (isset($options['method'])) {
+    if ($options['method']=='GET') {
+      $method = HTTP_Request2::METHOD_GET;
+    }
+    else {
+      $method = HTTP_Request2::METHOD_POST;
+    }
+  } 
+  
+  $request = new HTTP_Request2($url, $method, $config);
+  
+  if (isset($options['data'])) {
+    $data = $options['data'];
+    if (is_string($data)) {
+      parse_str($data, $data);
+    }
+    if ($method==HTTP_Request2::METHOD_GET) {
+      $request->getUrl()->setQueryVariables($data);
+    }
+    else {
+      $request->addPostParameter($data);
+    }
+  }
+  
+  if (isset($options['headers'])) {
+    $request->setHeader($options['headers']);
+  }
+  
+  $result = new stdClass();
+  
+  try {
+    $res = $request->send();
+  }
+  catch (HTTP_Request2_Exception $e) {
+    $result->error = 'send() threw exception';
+    $result->code = -1001;
+  }
+  
+  $result->code = $res->getStatus();
+  $result->status_message = $res->getReasonPhrase();
+  $result->data = $res->getBody();
+  $result->headers = $res->getHeader();
+  
+  return $result;
+}

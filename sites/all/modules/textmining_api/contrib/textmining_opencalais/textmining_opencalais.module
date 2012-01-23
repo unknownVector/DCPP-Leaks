@@ -1,0 +1,15 @@
+<?php
+
+define('TEXTMINING_OPENCALAIS_URL', 'http://api.opencalais.com/enlighten/rest/');
+
+/**
+ * Implements hook_process_api_service_info().
+ */
+function textmining_opencalais_process_api_service_info() {
+  $services['textmining_api_opencalais_service'] = array(
+    'name' => t('OpenCalais Terms'),
+    'description' => t('Generate terms with OpenCalais.'),
+    'class' => 'TextminingApiServiceOpenCalais',
+  );
+  return $services;
+}

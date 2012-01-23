@@ -1,0 +1,15 @@
+<?php
+
+define('TEXTMINING_TAGTHENET_URL', 'http://tagthe.net/api/');
+
+/**
+ * Implements hook_process_api_service_info().
+ */
+function textmining_tagthenet_process_api_service_info() {
+  $services['textmining_api_tagthenet_service'] = array(
+    'name' => t('Tagthe.net Terms'),
+    'description' => t('Generate terms with Tagthe.net.'),
+    'class' => 'TextminingApiServiceTagthenet',
+  );
+  return $services;
+}

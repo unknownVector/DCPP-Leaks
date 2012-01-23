@@ -1,0 +1,13 @@
+<?php
+
+/**
+ * Implements hook_process_api_service_info().
+ */
+function textmining_random_process_api_service_info() {
+  $services['textmining_api_random_service'] = array(
+    'name' => t('Random Terms'),
+    'description' => t('Generate random terms.'),
+    'class' => 'TextminingApiServiceRandom',
+  );
+  return $services;
+}

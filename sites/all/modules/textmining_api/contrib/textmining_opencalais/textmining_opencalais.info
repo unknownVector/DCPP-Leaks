@@ -1,0 +1,19 @@
+
+name = OpenCalais Terms
+description = "Generate terms with OpenCalais."
+dependencies[] = textmining_api
+dependencies[] = taxonomy
+core = 7.x
+package = Text Minig API
+
+files[] = textmining_opencalais.module
+files[] = service.inc
+
+configure = admin/config/system/process_api
+
+; Information added by drupal.org packaging script on 2011-06-23
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "textmining_api"
+datestamp = "1308831749"
+

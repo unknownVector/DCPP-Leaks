@@ -1,0 +1,38 @@
+<?php
+
+/**
+ * @file
+ * Install functions for Text mining API.
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function textmining_api_requirements($phase) {
+  $requirements = array();
+  // Ensure translations don't break at install time
+  $t = get_t();
+
+  // Report Drupal version
+  if ($phase == 'runtime') {
+    $exists=FALSE;
+    try {
+      @include_once 'HTTP/Request2.php';
+      if (class_exists('HTTP_Request2')) {
+        $request = new HTTP_Request2('http://drupal.org');
+        $exists=TRUE;
+      }
+    }
+    catch (Exception $e) {
+    }
+    
+    $requirements['HTTP_Request2'] = array(
+      'title' => $t('PEAR::HTTP_Request2'), 
+      'value' => $exists?t('Installed'):t('Not Installed'),
+      'description' => t('Text mining API may need <a href="http://pear.php.net/manual/en/package.http.http-request2.php">PEAR::HTTP_Request2</a> for proxy support.'),
+      'severity' => $exists?REQUIREMENT_WARNING:REQUIREMENT_OK,
+    );
+  }
+  
+  return $requirements;
+}
